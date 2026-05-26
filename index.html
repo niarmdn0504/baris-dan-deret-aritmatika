@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuis Barisan & Deret Aritmatika</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; font-family: "Nunito", sans-serif; }
+
+    .quiz-shell {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(59,130,246,0.15), transparent 28%),
+        radial-gradient(circle at 90% 10%, rgba(96,165,250,0.13), transparent 26%),
+        linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 52%, #eff6ff 100%);
+    }
+
+    .math-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      opacity: 0.3;
+      background-image:
+        linear-gradient(rgba(30,58,138,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30,58,138,0.05) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    .float-mark {
+      position: fixed; border-radius: 999px;
+      color: rgba(30,58,138,0.08); font-weight: 900;
+      animation: drift 9s ease-in-out infinite; pointer-events: none; z-index: 0;
+    }
+    @keyframes drift {
+      0%,100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-18%) rotate(5deg); }
+    }
+
+    .card-glass {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(191,219,254,0.5);
+      box-shadow: 0 20px 60px rgba(37,99,235,0.10);
+      backdrop-filter: blur(16px);
+    }
+
+    /* ===== SPINNER ===== */
+    .spinner-wheel {
+      width: 240px; height: 240px; border-radius: 50%;
+      position: relative; overflow: hidden;
+      border: 10px solid #fff;
+      box-shadow: 0 20px 40px rgba(217,119,6,0.18), inset 0 0 0 2px rgba(0,0,0,0.04);
+      transition: transform 3s cubic-bezier(.12,.72,.14,1);
+      background: conic-gradient(#3b82f6 0deg 180deg, #06b6d4 180deg 360deg);
+    }
+    .spinner-wheel::after {
+      content: ""; position: absolute; inset: 36%;
+      background: white; border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .wheel-label {
+      position: absolute; z-index: 2; font-weight: 900; color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4); width: 110px;
+      text-align: center; line-height: 1.1; font-size: 14px; pointer-events: none;
+    }
+    .wheel-label.top { top: 22px; left: 50%; transform: translateX(-50%); }
+    .wheel-label.bottom { bottom: 22px; left: 50%; transform: translateX(-50%); }
+    .pointer {
+      width: 0; height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 30px solid #1e3a8a;
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,0.18));
+    }
+
+    /* ===== TIMER ===== */
+    #timerRing { transition: stroke-dashoffset 1s linear; }
+    .timer-danger { color: #ef4444 !important; }
+    .timer-danger #timerRing { stroke: #ef4444 !important; }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar-track {
+      width: 100%; height: 10px; background: rgba(37,99,235,0.12);
+      border-radius: 999px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      border-radius: 999px; transition: width 0.4s ease;
+    }
+
+    /* ===== ANSWER BUTTONS ===== */
+    .answer-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59,130,246,0.13); }
+    .answer-btn:nth-child(1) { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+    .answer-btn:nth-child(1):hover { background: #bfdbfe; }
+    .answer-btn:nth-child(2) { background: #e0e7ff; border-color: #c7d2fe; color: #3730a3; }
+    .answer-btn:nth-child(2):hover { background: #c7d2fe; }
+    .answer-btn:nth-child(3) { background: #f3e8ff; border-color: #e9d5ff; color: #581c87; }
+    .answer-btn:nth-child(3):hover { background: #e9d5ff; }
+    .answer-btn:nth-child(4) { background: #fce7f3; border-color: #fbcfe8; color: #be185d; }
+    .answer-btn:nth-child(4):hover { background: #fbcfe8; }
+    .answer-btn.correct { background: #d1fae5 !important; border-color: #6ee7b7 !important; color: #065f46 !important; transform: scale(1.02); }
+    .answer-btn.wrong   { background: #fee2e2 !important; border-color: #fca5a5 !important; color: #991b1b !important; }
+
+    /* ===== MODAL ===== */
+    .pop-in { animation: popIn 0.28s ease both; }
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    /* ===== LEADERBOARD ===== */
+    .lb-row { transition: background 0.2s; }
+    .lb-row:hover { background: rgba(59,130,246,0.06); }
+
+    /* ===== HINT BOX ===== */
+    .hint-box {
+      background: #fffbeb; border: 1.5px solid #fcd34d;
+      border-radius: 1.25rem; padding: 1rem 1.25rem;
+      font-weight: 700; color: #78350f; line-height: 1.6;
+      animation: popIn 0.2s ease both;
+    }
+
+    /* ===== AMBIENT MUSIC BARS ===== */
+    .ambient-bars {
+      position: fixed; bottom: 16px; right: 16px;
+      display: flex; gap: 3px; z-index: 5; pointer-events: none;
+    }
+    .ambient-bars.muted { opacity: 0.25; }
+    .abar {
+      width: 3px; height: 16px;
+      background: linear-gradient(to top, #3b82f6, #06b6d4);
+      border-radius: 2px; opacity: 0.5;
+      animation: abarBounce 0.7s ease-in-out infinite;
+    }
+    .abar:nth-child(1) { animation-delay: 0s; }
+    .abar:nth-child(2) { animation-delay: 0.12s; }
+    .abar:nth-child(3) { animation-delay: 0.24s; }
+    .abar:nth-child(4) { animation-delay: 0.12s; }
+    @keyframes abarBounce {
+      0%,100% { height: 6px; }
+      50%      { height: 18px; }
+    }
+
+    /* ===== MISC ===== */
+    .slide-up { animation: slideUp 0.4s ease both; }
+    @keyframes slideUp {
+      from { transform: translateY(5%); opacity: 0; }
+      to   { transform: translateY(0);  opacity: 1; }
+    }
+    .success-bounce { animation: successBounce 0.5s cubic-bezier(0.68,-0.55,0.265,1.55); }
+    @keyframes successBounce {
+      0%  { transform: scale(0.4); opacity: 0; }
+      60% { transform: scale(1.12); }
+      100%{ transform: scale(1);   opacity: 1; }
+    }
+    .pulse-glow { animation: pulseGlow 1.5s ease-in-out infinite; }
+    @keyframes pulseGlow {
+      0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.6); }
+      50%      { box-shadow: 0 0 0 16px rgba(22,163,74,0); }
+    }
+    .confetti { position: fixed; pointer-events: none; z-index: 40; }
+    .confetti-piece { animation: confettiFall 5s ease-in forwards; position: absolute; }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-180px) rotateZ(0deg) scale(1); opacity: 0.95; }
+      100% { transform: translateY(1400px) rotateZ(1080deg) scale(0); opacity: 0; }
+    }
+    @keyframes ribbonExplodeCustom {
+      0%   { transform: translate(0,0) scale(1) rotateZ(0deg); opacity: 1; }
+      100% { transform: translate(var(--tx),var(--ty)) scale(0.05) rotateZ(180deg); opacity: 0; }
+    }
+    @keyframes sparkShine {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx),var(--ty)) scale(0); opacity: 0; }
+    }
+    @keyframes megaPulseExpand {
+      0%   { width:80px; height:80px; opacity:1; box-shadow:0 0 0 0 rgba(251,191,36,0.9); }
+      100% { width:600px; height:600px; opacity:0; box-shadow:0 0 40px 20px rgba(251,191,36,0); }
+    }
+    @keyframes redFlash {
+      0%,100% { opacity: 0; } 25% { opacity: 0.75; } 75% { opacity: 0.35; }
+    }
+    @media (max-width: 640px) {
+      .spinner-wheel { width: 190px; height: 190px; }
+    }
+
+    /* ===== HOME BUTTON ===== */
+    .home-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1e3a8a; color: #fff; font-weight: 900;
+      border-radius: 999px; padding: 8px 18px; font-size: 13px;
+      text-decoration: none; transition: background 0.15s;
+      box-shadow: 0 4px 14px rgba(30,58,138,0.25);
+    }
+    .home-btn:hover { background: #1e40af; }
+  </style>
+</head>
+<body class="h-full">
+<div class="math-grid"></div>
+<div class="float-mark text-6xl" style="left:6%;top:10%">Σ</div>
+<div class="float-mark text-5xl" style="right:7%;top:16%;animation-delay:1s">Un</div>
+<div class="float-mark text-6xl" style="left:9%;bottom:10%;animation-delay:2s">Sn</div>
+<div class="float-mark text-4xl" style="right:11%;bottom:13%;animation-delay:3s">+d</div>
+
+<!-- Ambient music bars -->
+<div id="ambientBars" class="ambient-bars muted">
+  <div class="abar"></div><div class="abar"></div><div class="abar"></div><div class="abar"></div>
+</div>
+
+<div id="app" class="quiz-shell relative z-10">
+
+  <!-- ===== HEADER ===== -->
+  <header class="w-full px-5 pt-5 md:px-10 md:pt-7">
+    <div class="mx-auto max-w-6xl flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-extrabold text-blue-800 shadow-sm">🎓 Matematika Kelas 12 SMA</span>
+          <a href="https://canva.link/rhfp4kog21ug1rc" class="home-btn">🏠 Home</a>
+          <button id="muteBtn" onclick="toggleMute()" class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-white transition" title="Mute/Unmute musik">🔊</button>
+          <button onclick="showLeaderboard()" class="inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-3 py-2 text-sm font-bold text-amber-800 shadow-sm hover:bg-amber-200 transition">🏆 Papan Skor</button>
+        </div>
+        <h1 class="mt-3 text-3xl md:text-5xl font-black leading-tight text-blue-950">Kuis Barisan &amp; Deret Aritmatika</h1>
+        <p class="mt-1 max-w-xl text-base font-bold text-blue-900/70">Putar spinner, jawab soal, kalahkan waktumu sendiri!</p>
+      </div>
+      <div class="card-glass rounded-2xl px-5 py-4 text-blue-950 flex gap-6 items-center">
+        <div>
+          <div class="text-xs font-extrabold opacity-60">Skor</div>
+          <div class="text-3xl font-black"><span id="scoreText">0</span></div>
+        </div>
+        <div>
+          <div class="text-xs font-extrabold opacity-60">Soal Dijawab</div>
+          <div class="text-3xl font-black"><span id="totalAnswered">0</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== START SCREEN ===== -->
+  <main class="w-full px-5 py-6 md:px-10 md:py-8">
+    <section id="startScreen" class="mx-auto max-w-6xl card-glass rounded-[2rem] p-6 md:p-10 slide-up">
+      <div class="grid md:grid-cols-[1fr_1.1fr] gap-8 items-center">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-black text-blue-950">Putar Spinner Materi</h2>
+          <p class="mt-2 font-bold text-blue-900/70">Spinner memilih materi secara acak — soal langsung tampil setelah berhenti.</p>
+          <div class="mt-5 grid sm:grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4">
+              <div class="flex items-center gap-2 font-black text-blue-800"><span class="grid place-items-center w-8 h-8 rounded-xl bg-blue-600 text-white text-sm">1</span> Barisan Aritmatika</div>
+              <p class="mt-2 text-sm font-bold text-blue-900/65">Suku ke-n, beda, rumus umum barisan.</p>
+            </div>
+            <div class="rounded-2xl bg-cyan-50 border border-cyan-200 p-4">
+              <div class="flex items-center gap-2 font-black text-cyan-800"><span class="grid place-items-center w-8 h-8 rounded-xl bg-cyan-500 text-white text-sm">2</span> Deret Aritmatika</div>
+              <p class="mt-2 text-sm font-bold text-cyan-900/65">Jumlah n suku pertama dan penerapannya.</p>
+            </div>
+          </div>
+
+          <!-- Rumus hint box on start -->
+          <div class="hint-box mt-5 text-sm">
+            📐 <strong>Rumus Kunci:</strong><br>
+            <span class="text-blue-800">Un = a + (n−1)b</span> &nbsp;|&nbsp;
+            <span class="text-cyan-800">Sn = n/2 · (2a + (n−1)b)</span><br>
+            <span class="text-slate-600">a = suku pertama &nbsp;|&nbsp; b = beda &nbsp;|&nbsp; n = jumlah suku</span>
+          </div>
+
+          <button id="spinButton" class="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-white font-black shadow-lg shadow-blue-700/20 hover:bg-blue-700 active:scale-95 transition cursor-pointer">
+            🔄 Putar Spinner
+          </button>
+        </div>
+        <div class="flex flex-col items-center justify-center">
+          <div class="pointer mb-[-2px] z-10"></div>
+          <div id="wheel" class="spinner-wheel">
+            <div class="wheel-label top">Barisan<br>Aritmatika</div>
+            <div class="wheel-label bottom">Deret<br>Aritmatika</div>
+          </div>
+          <p id="spinStatus" class="mt-4 min-h-[30px] rounded-full bg-white/70 px-5 py-2 text-center font-black text-blue-950">Siap diputar!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== QUIZ SCREEN ===== -->
+    <section id="quizScreen" class="hidden mx-auto max-w-5xl card-glass rounded-[2rem] p-6 md:p-9 slide-up">
+      <!-- Top bar: badge + timer + progress -->
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <div id="categoryBadge" class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black bg-blue-100 text-blue-800">📚 Barisan Aritmatika</div>
+          <h2 id="questionNumber" class="mt-3 text-xl md:text-2xl font-black text-blue-950">Soal 1 dari 5</h2>
+        </div>
+
+        <!-- Timer ring -->
+        <div id="timerWrap" class="flex flex-col items-center gap-1">
+          <div class="relative w-16 h-16">
+            <svg viewBox="0 0 60 60" class="w-16 h-16 -rotate-90">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(37,99,235,0.12)" stroke-width="5"/>
+              <circle id="timerRing" cx="30" cy="30" r="24" fill="none"
+                stroke="#3b82f6" stroke-width="5"
+                stroke-dasharray="150.8" stroke-dashoffset="0"
+                stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span id="timerNum" class="text-xl font-black text-blue-700">30</span>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-blue-900/50">detik</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mt-4">
+        <div class="flex justify-between text-xs font-bold text-blue-900/50 mb-1">
+          <span>Kemajuan</span>
+          <span id="progressLabel">0/5</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="progressBar" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div class="mt-6 rounded-2xl bg-white/80 border border-white/80 p-5 md:p-7">
+        <p id="questionText" class="text-lg md:text-xl font-black leading-relaxed text-blue-950"></p>
+
+        <!-- Hint toggle -->
+        <div class="mt-4">
+          <button id="hintBtn" onclick="toggleHint()" class="inline-flex items-center gap-2 rounded-xl bg-amber-100 border border-amber-300 px-4 py-2 text-sm font-bold text-amber-800 hover:bg-amber-200 transition">
+            💡 Tampilkan Rumus Hint
+          </button>
+          <div id="hintBox" class="hint-box mt-3 hidden text-sm"></div>
+        </div>
+
+        <div id="answerGrid" class="mt-5 grid gap-3"></div>
+      </div>
+
+      <!-- Bottom actions -->
+      <div class="mt-5 flex flex-col sm:flex-row gap-3 justify-between">
+        <button id="backToSpinButton" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/80 border border-blue-100 px-5 py-3 font-black text-blue-900 hover:bg-blue-50 transition">
+          🔀 Pilih Materi Lagi
+        </button>
+        <button id="skipButton" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 font-black text-white hover:bg-cyan-600 transition">
+          ⏭ Ganti Soal Lain
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modalOverlay" class="hidden fixed inset-0 z-30 items-center justify-center bg-blue-950/40 px-5">
+  <div id="feedbackModal" class="pop-in w-full max-w-xl rounded-[2rem] bg-white p-6 md:p-8 shadow-2xl">
+    <div id="feedbackIcon" class="mx-auto grid h-20 w-20 place-items-center rounded-full text-4xl"></div>
+    <h2 id="feedbackTitle" class="mt-4 text-center text-3xl font-black"></h2>
+    <p id="feedbackMessage" class="mt-2 text-center text-lg font-extrabold text-slate-700"></p>
+    <div id="explanationBox" class="mt-4 hidden rounded-2xl border p-4 text-slate-800 font-bold leading-relaxed text-sm"></div>
+    <div id="modalActions" class="mt-5 grid sm:grid-cols-2 gap-3"></div>
+  </div>
+</div>
+
+<!-- ===== LEADERBOARD MODAL ===== -->
+<div id="lbOverlay" class="hidden fixed inset-0 z-50 items-center justify-center bg-blue-950/50 px-5">
+  <div class="pop-in w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-black text-blue-950">🏆 Papan Skor</h2>
+      <button onclick="hideLb()" class="rounded-full bg-blue-100 px-3 py-1 text-sm font-black text-blue-700 hover:bg-blue-200">✕ Tutup</button>
+    </div>
+    <div id="lbList" class="space-y-2 max-h-72 overflow-y-auto"></div>
+    <button onclick="clearLb()" class="mt-4 w-full rounded-xl bg-red-50 border border-red-200 py-2 text-sm font-bold text-red-600 hover:bg-red-100">🗑 Hapus Semua Skor</button>
+  </div>
+</div>
+
+<!-- ===== COMPLETION MODAL ===== -->
+<div id="completionOverlay" class="hidden fixed inset-0 z-50 items-center justify-center bg-blue-950/50 px-5">
+  <div class="pop-in w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl text-center">
+    <div class="text-5xl mb-3">🏆</div>
+    <h2 class="text-3xl font-black text-emerald-700">Kuis Selesai!</h2>
+    <p id="finalScoreMsg" class="mt-2 text-lg font-bold text-slate-700"></p>
+    <p id="finalTimeMsg" class="mt-1 text-sm font-bold text-slate-500"></p>
+    <div class="hint-box mt-4 text-sm text-left">
+      💡 Ingat: <strong>Barisan</strong> membahas pola suku (Un), <strong>Deret</strong> membahas jumlahnya (Sn).
+    </div>
+    <div class="mt-5 grid gap-3">
+      <button onclick="shareScore()" class="rounded-2xl bg-green-600 py-3 font-black text-white hover:bg-green-700 transition">📤 Bagikan Skor ke WhatsApp</button>
+      <button onclick="resetToStart()" class="rounded-2xl bg-blue-600 py-3 font-black text-white hover:bg-blue-700 transition">🔄 Main Lagi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==============================
+// DATA
+// ==============================
+const TIMER_MAX = 30;
+
+const questions = {
+  barisan: [
+    {
+      question: "Barisan aritmatika: 7, 12, 17, 22, ... . Suku ke-18 adalah ....",
+      options: ["87", "92", "97", "102"],
+      answer: 1,
+      explanation: "Un = a + (n−1)b. a=7, b=5, n=18 → U18 = 7 + 17×5 = 92.",
+      hint: "Gunakan Un = a + (n−1)b. a = suku pertama, b = beda."
+    },
+    {
+      question: "Barisan aritmatika: suku ke-4 = 19, suku ke-10 = 49. Beda barisan tersebut adalah ....",
+      options: ["4", "5", "6", "7"],
+      answer: 1,
+      explanation: "Selisih indeks 10−4=6. Selisih suku 49−19=30. Beda b = 30÷6 = 5.",
+      hint: "b = (U10 − U4) ÷ (10 − 4)"
+    },
+    {
+      question: "Barisan aritmatika: a=11, b=−3. Rumus suku ke-n adalah ....",
+      options: ["Un = 14 − 3n", "Un = 11 − 3n", "Un = 8 − 3n", "Un = 3n + 8"],
+      answer: 0,
+      explanation: "Un = 11 + (n−1)(−3) = 11 − 3n + 3 = 14 − 3n.",
+      hint: "Un = a + (n−1)b, kemudian sederhanakan."
+    },
+    {
+      question: "Siswa menabung Rp20.000 minggu ke-1, lalu bertambah Rp5.000 tiap minggu. Tabungan minggu ke-12 adalah ....",
+      options: ["Rp70.000", "Rp75.000", "Rp80.000", "Rp85.000"],
+      answer: 1,
+      explanation: "a=20.000, b=5.000, n=12. U12 = 20.000 + 11×5.000 = 75.000.",
+      hint: "Identifikasi a (minggu pertama) dan b (penambahan per minggu)."
+    },
+    {
+      question: "Baris 1 aula: 18 kursi; tiap baris berikutnya +4 kursi. Banyak kursi baris ke-15 adalah ....",
+      options: ["70", "74", "78", "82"],
+      answer: 1,
+      explanation: "a=18, b=4, n=15. U15 = 18 + 14×4 = 74.",
+      hint: "Tiap baris = satu suku barisan aritmatika."
+    }
+  ],
+  deret: [
+    {
+      question: "Jumlah 20 suku pertama deret: 4 + 9 + 14 + 19 + ... adalah ....",
+      options: ["970", "990", "1.030", "1.050"],
+      answer: 2,
+      explanation: "Sn = n/2(2a+(n−1)b). a=4, b=5, n=20 → S20 = 10(8+95) = 1.030.",
+      hint: "Sn = n/2 · (2a + (n−1)b)"
+    },
+    {
+      question: "Deret aritmatika: a=6, U15=62. Jumlah 15 suku pertama adalah ....",
+      options: ["480", "510", "525", "540"],
+      answer: 1,
+      explanation: "Sn = n/2(a+Un). S15 = 15/2(6+62) = 510.",
+      hint: "Jika a dan Un diketahui: Sn = n/2 · (a + Un)"
+    },
+    {
+      question: "Sn = 3n² + 2n. Suku ke-10 deret tersebut adalah ....",
+      options: ["53", "56", "59", "62"],
+      answer: 2,
+      explanation: "Un = Sn − S(n−1). S10=320, S9=261, U10 = 59.",
+      hint: "Un = Sn − S(n−1). Hitung S10 dan S9 terlebih dulu."
+    },
+    {
+      question: "Gedung: baris 1 = 12 kursi, +3 per baris, 18 baris. Total kursi adalah ....",
+      options: ["639", "657", "675", "693"],
+      answer: 2,
+      explanation: "a=12, b=3, n=18. S18 = 9(24+51) = 675.",
+      hint: "Total kursi = S18 (jumlah semua suku deret)."
+    },
+    {
+      question: "Pelari berlatih 10 hari: hari-1 = 2 km, +0,5 km/hari. Total 10 hari adalah ....",
+      options: ["40,5 km", "42,5 km", "44,5 km", "45,5 km"],
+      answer: 1,
+      explanation: "a=2, b=0,5, n=10. S10 = 5(4+4,5) = 42,5 km.",
+      hint: "S10 = 10/2 · (2×2 + 9×0,5)"
+    }
+  ]
+};
+
+// ==============================
+// STATE
+// ==============================
+let selectedCategory = null;
+let currentQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let totalAnswered = 0;
+let wheelRotation = 0;
+let answeredCorrectly = new Set();
+let timerInterval = null;
+let timeLeft = TIMER_MAX;
+let quizStartTime = null;
+let musicMuted = false;
+let ambientCtx = null;
+let hintShown = false;
+
+// ==============================
+// AUDIO
+// ==============================
+function getAudioCtx() {
+  if (!ambientCtx || ambientCtx.state === 'closed') {
+    ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return ambientCtx;
+}
+
+// ---- Ambient music: true continuous loop ----
+let ambientMaster = null;   // GainNode — volume control
+let ambientScheduler = null; // setInterval handle
+let ambientNextTime = 0;
+
+const AMBIENT_NOTES = [261.63, 329.63, 392.00, 329.63, 261.63, 293.66, 349.23, 261.63];
+const AMBIENT_NOTE_LEN = 1.2; // seconds per note
+const AMBIENT_LOOK_AHEAD = 0.3; // schedule this far ahead
+const AMBIENT_INTERVAL = 100; // ms scheduler tick
+
+function startAmbientMusic() {
+  if (musicMuted) return;
+  if (ambientMaster) return; // already running
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    ambientMaster = ctx.createGain();
+    ambientMaster.gain.setValueAtTime(0, ctx.currentTime);
+    ambientMaster.gain.linearRampToValueAtTime(0.055, ctx.currentTime + 1.2);
+    ambientMaster.connect(ctx.destination);
+
+    ambientNextTime = ctx.currentTime + 0.1;
+    let noteIndex = 0;
+
+    ambientScheduler = setInterval(() => {
+      if (!ambientMaster) { clearInterval(ambientScheduler); return; }
+      const c = getAudioCtx();
+      while (ambientNextTime < c.currentTime + AMBIENT_LOOK_AHEAD + AMBIENT_NOTE_LEN) {
+        const freq = AMBIENT_NOTES[noteIndex % AMBIENT_NOTES.length];
+        const osc = c.createOscillator();
+        const g   = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(g);
+        g.connect(ambientMaster);
+        const t = ambientNextTime;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.85, t + 0.18);
+        g.gain.linearRampToValueAtTime(0,    t + AMBIENT_NOTE_LEN * 0.88);
+        osc.start(t);
+        osc.stop(t + AMBIENT_NOTE_LEN);
+        ambientNextTime += AMBIENT_NOTE_LEN;
+        noteIndex++;
+      }
+    }, AMBIENT_INTERVAL);
+
+    document.getElementById('ambientBars').classList.remove('muted');
+  } catch(e) {}
+}
+
+function pauseAmbientMusic() {
+  // Fade out tapi scheduler tetap jalan — resume langsung nyambung
+  try {
+    if (ambientMaster) {
+      const ctx = getAudioCtx();
+      ambientMaster.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+    }
+    document.getElementById('ambientBars').classList.add('muted');
+  } catch(e) {}
+}
+
+function resumeAmbientMusic() {
+  if (musicMuted || !ambientMaster) return;
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    ambientMaster.gain.linearRampToValueAtTime(0.055, ctx.currentTime + 0.5);
+    document.getElementById('ambientBars').classList.remove('muted');
+  } catch(e) {}
+}
+
+function stopAmbientMusic() {
+  try {
+    clearInterval(ambientScheduler);
+    ambientScheduler = null;
+    if (ambientMaster) {
+      try { ambientMaster.disconnect(); } catch(e) {}
+      ambientMaster = null;
+    }
+    document.getElementById('ambientBars').classList.add('muted');
+  } catch(e) {}
+}
+
+function toggleMute() {
+  musicMuted = !musicMuted;
+  document.getElementById('muteBtn').textContent = musicMuted ? '🔇' : '🔊';
+  if (musicMuted) {
+    stopAmbientMusic();
+  } else {
+    startAmbientMusic();
+  }
+}
+
+function playSuccessSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    [[523.25,0.05],[659.25,0.18],[783.99,0.34],[1046.5,0.52]].forEach(([freq, delay]) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = delay > 0.4 ? 'triangle' : 'sine';
+      o.frequency.value = freq;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.28, now + delay);
+      g.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.28);
+      o.start(now + delay); o.stop(now + delay + 0.3);
+    });
+  } catch(e) {}
+}
+
+function playErrorSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(380, now);
+    o.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.22, now);
+    g.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    o.start(now); o.stop(now + 0.35);
+  } catch(e) {}
+}
+
+function playTickSound() {
+  if (timeLeft > 10) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square'; o.frequency.value = 880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.06, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    o.start(now); o.stop(now + 0.08);
+  } catch(e) {}
+}
+
+// ==============================
+// TIMER
+// ==============================
+const CIRCUMFERENCE = 2 * Math.PI * 24; // ~150.8
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = TIMER_MAX;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    playTickSound();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timeExpired();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const el = document.getElementById('timerNum');
+  const ring = document.getElementById('timerRing');
+  const wrap = document.getElementById('timerWrap');
+  el.textContent = timeLeft;
+  const offset = CIRCUMFERENCE * (1 - timeLeft / TIMER_MAX);
+  ring.style.strokeDashoffset = offset;
+  if (timeLeft <= 10) {
+    wrap.classList.add('timer-danger');
+    el.classList.add('timer-danger');
+    ring.style.stroke = '#ef4444';
+  } else {
+    wrap.classList.remove('timer-danger');
+    el.classList.remove('timer-danger');
+    ring.style.stroke = '#3b82f6';
+  }
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+function timeExpired() {
+  playErrorSound();
+  createRedFlash();
+  lockAnswerButtons();
+  showModal({
+    correct: false,
+    title: "Waktu Habis! ⏰",
+    message: "Waktu 30 detik sudah habis.",
+    explanation: questions[selectedCategory][currentIndex].explanation
+  });
+}
+
+// ==============================
+// HINT
+// ==============================
+function toggleHint() {
+  const box = document.getElementById('hintBox');
+  const btn = document.getElementById('hintBtn');
+  hintShown = !hintShown;
+  if (hintShown) {
+    box.textContent = '📐 ' + currentQuestions[currentIndex].hint;
+    box.classList.remove('hidden');
+    btn.textContent = '💡 Sembunyikan Hint';
+  } else {
+    box.classList.add('hidden');
+    btn.textContent = '💡 Tampilkan Rumus Hint';
+  }
+}
+
+// ==============================
+// LEADERBOARD
+// ==============================
+function getLb() {
+  try { return JSON.parse(localStorage.getItem('kuis_lb') || '[]'); } catch(e){ return []; }
+}
+function saveLb(lb) {
+  localStorage.setItem('kuis_lb', JSON.stringify(lb));
+}
+function addToLb(sc, cat, total) {
+  const lb = getLb();
+  lb.push({ score: sc, category: cat, total: total, date: new Date().toLocaleDateString('id-ID') });
+  lb.sort((a,b) => b.score - a.score);
+  saveLb(lb.slice(0, 10));
+}
+function showLeaderboard() {
+  const lb = getLb();
+  const list = document.getElementById('lbList');
+  if (lb.length === 0) {
+    list.innerHTML = '<p class="text-center text-slate-500 font-bold py-6">Belum ada skor tersimpan.</p>';
+  } else {
+    list.innerHTML = lb.map((e,i) => `
+      <div class="lb-row flex items-center gap-3 rounded-xl px-4 py-3 ${i===0?'bg-amber-50 border border-amber-200':'bg-slate-50'}">
+        <span class="text-xl">${['🥇','🥈','🥉'][i] || '🔹'}</span>
+        <div class="flex-1">
+          <div class="font-black text-blue-950">${e.score} benar <span class="font-bold text-slate-500 text-sm">dari ${e.total} soal</span></div>
+          <div class="text-xs font-bold text-slate-400">${e.category} · ${e.date}</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('lbOverlay').classList.remove('hidden');
+  document.getElementById('lbOverlay').classList.add('flex');
+}
+function hideLb() {
+  document.getElementById('lbOverlay').classList.add('hidden');
+  document.getElementById('lbOverlay').classList.remove('flex');
+}
+function clearLb() {
+  if (confirm('Hapus semua skor?')) { localStorage.removeItem('kuis_lb'); showLeaderboard(); }
+}
+
+// ==============================
+// SHARE SCORE
+// ==============================
+function shareScore() {
+  const cat = selectedCategory === 'barisan' ? 'Barisan Aritmatika' : 'Deret Aritmatika';
+  const msg = `🎉 Aku baru selesai Kuis ${cat}!\n✅ Skor: ${score} dari ${currentQuestions.length} soal\n📚 Coba juga: https://bantuguruyuk.web.id`;
+  const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// ==============================
+// CONFETTI & EFFECTS
+// ==============================
+function createConfetti() {
+  const ribbonColors = ["#fbbf24","#f97316","#fcd34d","#fb923c","#fca5a5","#fed7aa","#ec4899","#06b6d4","#10b981","#8b5cf6","#f43f5e","#ff6b6b","#4ecdc4"];
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+
+  // 500 pita meledak dari tengah ke semua arah
+  for (let i = 0; i < 500; i++) {
+    const ribbon = document.createElement("div");
+    const angle = (Math.PI * 2 * i) / 500;
+    const distance = 600 + Math.random() * 500;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const dur = 1.8 + Math.random() * 0.8;
+    const delay = Math.random() * 0.05;
+    ribbon.style.cssText = `position:fixed;left:${centerX}px;top:${centerY}px;width:${6+Math.random()*10}px;height:${30+Math.random()*60}px;background:${ribbonColors[Math.floor(Math.random()*ribbonColors.length)]};border-radius:3px;z-index:39;pointer-events:none;box-shadow:0 8px 20px rgba(251,191,36,0.8);opacity:0.98;--tx:${tx}px;--ty:${ty}px;--rz:${Math.random()*1080}deg;animation:ribbonExplodeCustom ${dur}s cubic-bezier(0.34,1.56,0.64,1) ${delay}s forwards`;
+    document.body.appendChild(ribbon);
+    setTimeout(() => ribbon.remove(), (dur + delay) * 1000 + 200);
+  }
+
+  // 600 hujan confetti dari atas
+  const confettiColors = ["#fbbf24","#f97316","#fcd34d","#fb923c","#fca5a5","#ec4899","#06b6d4","#10b981"];
+  const container = document.createElement("div");
+  container.className = "confetti";
+  document.body.appendChild(container);
+  for (let i = 0; i < 600; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    const delay = Math.random() * 0.6;
+    p.style.cssText = `left:${Math.random()*100}%;top:-180px;width:${Math.random()*16+4}px;height:${Math.random()*16+4}px;background:${confettiColors[Math.floor(Math.random()*confettiColors.length)]};border-radius:${Math.random()>0.5?'50%':'0'};position:absolute;opacity:0.95;box-shadow:0 4px 8px rgba(0,0,0,0.15);animation-delay:${delay}s;transform:translateX(${(Math.random()-0.5)*600}px) rotateZ(${Math.random()*720}deg) scale(${0.5+Math.random()*1.5})`;
+    container.appendChild(p);
+  }
+  setTimeout(() => container.remove(), 6000);
+
+  // 80 emoji meledak dari tengah
+  const starEmojis = ["⭐","✨","🎉","🎊","🌟","💫","🔆"];
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement("div");
+    const angle = (Math.PI * 2 * i) / 80;
+    const distance = 300 + Math.random() * 400;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const dur = 1.2 + Math.random() * 0.8;
+    star.style.cssText = `position:fixed;left:${centerX}px;top:${centerY}px;font-size:${1.5+Math.random()*1.5}rem;z-index:42;pointer-events:none;--tx:${tx}px;--ty:${ty}px;animation:sparkShine ${dur}s ease-out forwards`;
+    star.textContent = starEmojis[Math.floor(Math.random()*starEmojis.length)];
+    document.body.appendChild(star);
+    setTimeout(() => star.remove(), dur * 1000 + 200);
+  }
+
+  // Mega pulse glow dari tengah
+  const pulse = document.createElement("div");
+  pulse.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(251,191,36,0.8),transparent 70%);z-index:41;pointer-events:none;animation:megaPulseExpand 0.8s ease-out forwards`;
+  document.body.appendChild(pulse);
+  setTimeout(() => pulse.remove(), 900);
+}
+
+function createRedFlash() {
+  const f = document.createElement('div');
+  f.style.cssText = 'position:fixed;inset:0;background:rgba(239,68,68,0.35);z-index:50;pointer-events:none;animation:redFlash 0.7s ease';
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 800);
+}
+
+// ==============================
+// QUIZ LOGIC
+// ==============================
+function shuffleArray(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function lockAnswerButtons() {
+  document.querySelectorAll('.answer-btn').forEach(b => {
+    b.disabled = true;
+    b.style.pointerEvents = 'none';
+  });
+}
+
+function renderProgress() {
+  const done = answeredCorrectly.size;
+  const total = currentQuestions.length;
+  document.getElementById('progressBar').style.width = `${(done / total) * 100}%`;
+  document.getElementById('progressLabel').textContent = `${done}/${total}`;
+  document.getElementById('questionNumber').textContent = `Soal ${currentIndex + 1} dari ${total}`;
+}
+
+function renderQuestion() {
+  const q = currentQuestions[currentIndex];
+  const isBaris = selectedCategory === 'barisan';
+  const catName = isBaris ? 'Barisan Aritmatika' : 'Deret Aritmatika';
+  const badgeColor = isBaris ? 'bg-blue-100 text-blue-800' : 'bg-cyan-100 text-cyan-800';
+
+  document.getElementById('categoryBadge').className = `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black ${badgeColor}`;
+  document.getElementById('categoryBadge').textContent = `📚 ${catName}`;
+  document.getElementById('questionText').textContent = q.question;
+
+  // Reset hint
+  hintShown = false;
+  document.getElementById('hintBox').classList.add('hidden');
+  document.getElementById('hintBtn').textContent = '💡 Tampilkan Rumus Hint';
+
+  // Render answers
+  const grid = document.getElementById('answerGrid');
+  grid.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn w-full rounded-2xl border-2 px-5 py-4 text-left font-black';
+    btn.innerHTML = `<span class="inline-grid place-items-center mr-3 h-8 w-8 rounded-xl bg-white/60 text-sm font-black">${String.fromCharCode(65+i)}</span>${opt}`;
+    btn.addEventListener('click', () => checkAnswer(i, btn));
+    grid.appendChild(btn);
+  });
+
+  renderProgress();
+  startTimer();
+}
+
+function checkAnswer(selectedIndex, btn) {
+  stopTimer();
+  lockAnswerButtons();
+
+  const q = currentQuestions[currentIndex];
+  const btns = document.querySelectorAll('.answer-btn');
+  btns[q.answer].classList.add('correct');
+
+  if (selectedIndex === q.answer) {
+    if (!answeredCorrectly.has(currentIndex)) {
+      score++;
+      answeredCorrectly.add(currentIndex);
+      document.getElementById('scoreText').textContent = score;
+    }
+    totalAnswered++;
+    document.getElementById('totalAnswered').textContent = totalAnswered;
+    playSuccessSound();
+    setTimeout(() => createConfetti(), 60);
+    renderProgress();
+    showModal({ correct: true, title: 'BENAR! 🎉', message: 'Jawaban tepat!', explanation: '' });
+  } else {
+    btn.classList.add('wrong');
+    totalAnswered++;
+    document.getElementById('totalAnswered').textContent = totalAnswered;
+    playErrorSound();
+    createRedFlash();
+    showModal({ correct: false, title: 'SALAH! ❌', message: 'Coba lagi atau lihat penjelasan.', explanation: q.explanation });
+  }
+}
+
+function showModal({ correct, title, message, explanation }) {
+  pauseAmbientMusic();
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+
+  document.getElementById('feedbackIcon').className = `mx-auto grid h-20 w-20 place-items-center rounded-full text-4xl ${correct ? 'bg-blue-100 success-bounce pulse-glow' : 'bg-orange-100'}`;
+  document.getElementById('feedbackIcon').textContent = correct ? '✅' : '❌';
+  document.getElementById('feedbackTitle').className = `mt-4 text-center text-3xl font-black ${correct ? 'text-blue-700' : 'text-orange-700'}`;
+  document.getElementById('feedbackTitle').textContent = title;
+  document.getElementById('feedbackMessage').className = `mt-2 text-center text-base font-extrabold ${correct ? 'text-blue-600' : 'text-orange-600'}`;
+  document.getElementById('feedbackMessage').textContent = message;
+
+  const expBox = document.getElementById('explanationBox');
+  if (explanation) {
+    expBox.classList.remove('hidden');
+    expBox.className = 'mt-4 rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 text-slate-800 font-bold leading-relaxed text-sm';
+    expBox.innerHTML = `<strong>Penjelasan:</strong> ${explanation}`;
+  } else {
+    expBox.classList.add('hidden');
+  }
+
+  const actions = document.getElementById('modalActions');
+  actions.innerHTML = '';
+
+  if (correct) {
+    const next = document.createElement('button');
+    next.className = 'sm:col-span-2 rounded-2xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 transition';
+    next.textContent = 'Lanjut ➡️';
+    next.onclick = () => { closeModal(); resumeAmbientMusic(); goNextQuestion(); };
+    actions.appendChild(next);
+  } else {
+    const retry = document.createElement('button');
+    retry.className = 'rounded-2xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 transition';
+    retry.textContent = '🔁 Coba Lagi';
+    retry.onclick = () => {
+      closeModal();
+      document.querySelectorAll('.answer-btn').forEach(b => {
+        b.disabled = false; b.style.pointerEvents = 'auto';
+        b.classList.remove('correct','wrong');
+      });
+      startTimer();
+      resumeAmbientMusic();
+    };
+
+    const next = document.createElement('button');
+    next.className = 'rounded-2xl bg-amber-500 px-5 py-4 font-black text-white hover:bg-amber-600 transition';
+    next.textContent = '➡️ Ganti Soal';
+    next.onclick = () => { closeModal(); resumeAmbientMusic(); goNextQuestion(); };
+
+    actions.appendChild(retry);
+    actions.appendChild(next);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById('modalOverlay').classList.remove('flex');
+}
+
+function goNextQuestion() {
+  if (currentIndex < currentQuestions.length - 1) {
+    currentIndex++;
+    renderQuestion();
+  } else {
+    showCompletion();
+  }
+}
+
+function showCompletion() {
+  stopTimer();
+  stopAmbientMusic();
+
+  const cat = selectedCategory === 'barisan' ? 'Barisan Aritmatika' : 'Deret Aritmatika';
+  addToLb(score, cat, currentQuestions.length);
+
+  document.getElementById('finalScoreMsg').textContent = `Skor kamu: ${score} dari ${currentQuestions.length} soal benar. ${score === currentQuestions.length ? '🌟 Sempurna!' : score >= 3 ? '👍 Bagus!' : '💪 Terus berlatih!'}`;
+
+  const elapsed = quizStartTime ? Math.round((Date.now() - quizStartTime) / 1000) : 0;
+  document.getElementById('finalTimeMsg').textContent = `Total waktu: ${elapsed} detik`;
+
+  document.getElementById('completionOverlay').classList.remove('hidden');
+  document.getElementById('completionOverlay').classList.add('flex');
+  createConfetti();
+}
+
+function startQuiz(category) {
+  selectedCategory = category;
+  currentQuestions = shuffleArray(questions[category]);
+  currentIndex = 0;
+  answeredCorrectly = new Set();
+  score = 0;
+  totalAnswered = 0;
+  quizStartTime = Date.now();
+  document.getElementById('scoreText').textContent = 0;
+  document.getElementById('totalAnswered').textContent = 0;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  startAmbientMusic();
+  renderQuestion();
+}
+
+function spinWheel() {
+  const btn = document.getElementById('spinButton');
+  btn.disabled = true;
+  document.getElementById('spinStatus').textContent = 'Spinner sedang berputar...';
+
+  const category = Math.random() < 0.5 ? 'barisan' : 'deret';
+  const extraRounds = 5 + Math.floor(Math.random() * 3);
+  const targetAngle = category === 'barisan' ? 90 : 270;
+  wheelRotation += extraRounds * 360 + targetAngle;
+  document.getElementById('wheel').style.transform = `rotate(${wheelRotation}deg)`;
+
+  setTimeout(() => {
+    const name = category === 'barisan' ? 'Barisan Aritmatika' : 'Deret Aritmatika';
+    document.getElementById('spinStatus').textContent = `Terpilih: ${name}`;
+  }, 2600);
+
+  setTimeout(() => {
+    btn.disabled = false;
+    startQuiz(category);
+  }, 3200);
+}
+
+function resetToStart() {
+  stopTimer();
+  stopAmbientMusic();
+  document.getElementById('completionOverlay').classList.add('hidden');
+  document.getElementById('completionOverlay').classList.remove('flex');
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+  document.getElementById('spinStatus').textContent = 'Siap diputar!';
+}
+
+// ==============================
+// EVENT LISTENERS
+// ==============================
+document.getElementById('spinButton').onclick = () => spinWheel();
+document.getElementById('skipButton').onclick = () => { stopTimer(); goNextQuestion(); };
+document.getElementById('backToSpinButton').onclick = () => { stopTimer(); stopAmbientMusic(); resetToStart(); };
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+</script>
+</body>
+</html>
