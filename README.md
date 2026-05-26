@@ -1,0 +1,1 @@
+# baris-dan-deret-aritmatika
