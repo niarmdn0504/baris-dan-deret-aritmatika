@@ -192,6 +192,47 @@
   </style>
 </head>
 <body class="h-full">
+
+<!-- YouTube Background Music Player -->
+<div id="ytPlayerWrap" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;">
+  <div id="ytPlayer"></div>
+</div>
+<script>
+  var ytPlayer;
+  var ytReady = false;
+  var ytPendingPlay = false;
+
+  // Load YouTube IFrame API
+  var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('ytPlayer', {
+      height: '1', width: '1',
+      videoId: 'UaRrDZWhtWA',
+      playerVars: {
+        autoplay: 0,
+        loop: 1,
+        playlist: 'UaRrDZWhtWA',
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1
+      },
+      events: {
+        onReady: function(e) {
+          ytReady = true;
+          e.target.setVolume(35);
+          if (ytPendingPlay) { e.target.playVideo(); ytPendingPlay = false; }
+        }
+      }
+    });
+  }
+</script>
 <div class="math-grid"></div>
 <div class="float-mark text-6xl" style="left:6%;top:10%">Σ</div>
 <div class="float-mark text-5xl" style="right:7%;top:16%;animation-delay:1s">Un</div>
@@ -215,11 +256,8 @@
           <div class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-sm">
             <button id="muteBtn" onclick="toggleMute()" class="text-blue-700 font-bold hover:text-blue-900 transition text-sm">🔊</button>
             <input id="volumeSlider" type="range" min="0" max="100" value="35" oninput="setVolume(this.value)" class="w-16 h-1.5 accent-blue-500 cursor-pointer">
-            <label class="cursor-pointer inline-flex items-center gap-1 text-xs font-black text-blue-700 hover:text-blue-900 transition" title="Upload musik MP3 kamu sendiri">
-              🎵 Musik
-              <input type="file" accept="audio/*" class="hidden" onchange="loadMusicFile(this)">
-            </label>
-            <span id="musicLabel" class="text-xs font-bold text-blue-500 max-w-[80px] truncate hidden sm:block"></span>
+            <span class="text-xs font-black text-blue-700">🎵 Musik</span>
+            <span id="musicLabel" class="text-xs font-bold text-blue-500 max-w-[80px] truncate hidden sm:block">YouTube</span>
           </div>
           <button onclick="showLeaderboard()" class="inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-3 py-2 text-sm font-bold text-amber-800 shadow-sm hover:bg-amber-200 transition">🏆 Papan Skor</button>
           <span id="modeBadge" class="hidden inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-black shadow-sm"></span>
@@ -523,37 +561,41 @@ function selectMode(mode) {
 }
 
 // ==============================
-// AUDIO — user upload MP3 sendiri
+// AUDIO — YouTube background music
 // ==============================
-let bgAudio = null;
 let masterVolume = 35;
 let musicMuted = false;
 
 function setVolume(val) {
   masterVolume = parseInt(val);
-  if (bgAudio) bgAudio.volume = musicMuted ? 0 : masterVolume / 100;
+  if (ytPlayer && ytReady && !musicMuted) ytPlayer.setVolume(masterVolume);
 }
-function startAmbientMusic() {}
-function pauseAmbientMusic() { if (bgAudio) bgAudio.volume = 0; }
-function resumeAmbientMusic() { if (bgAudio && !musicMuted) bgAudio.volume = masterVolume / 100; }
-function stopAmbientMusic() { if (bgAudio) bgAudio.volume = 0; }
+function startAmbientMusic() {
+  if (!ytReady) { ytPendingPlay = true; return; }
+  try { ytPlayer.setVolume(masterVolume); ytPlayer.playVideo(); } catch(e) {}
+  document.getElementById('ambientBars').classList.remove('muted');
+}
+function pauseAmbientMusic() {
+  try { if (ytPlayer && ytReady) ytPlayer.setVolume(0); } catch(e) {}
+}
+function resumeAmbientMusic() {
+  try { if (ytPlayer && ytReady && !musicMuted) ytPlayer.setVolume(masterVolume); } catch(e) {}
+}
+function stopAmbientMusic() {
+  try { if (ytPlayer && ytReady) ytPlayer.setVolume(0); } catch(e) {}
+}
 function toggleMute() {
   musicMuted = !musicMuted;
   document.getElementById('muteBtn').textContent = musicMuted ? '🔇' : '🔊';
-  if (bgAudio) bgAudio.volume = musicMuted ? 0 : masterVolume / 100;
+  try {
+    if (ytPlayer && ytReady) {
+      if (musicMuted) ytPlayer.setVolume(0);
+      else ytPlayer.setVolume(masterVolume);
+    }
+  } catch(e) {}
   document.getElementById('ambientBars').classList.toggle('muted', musicMuted);
 }
-function loadMusicFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (bgAudio) { bgAudio.pause(); bgAudio = null; }
-  bgAudio = new Audio(URL.createObjectURL(file));
-  bgAudio.loop = true;
-  bgAudio.volume = masterVolume / 100;
-  bgAudio.play();
-  document.getElementById('ambientBars').classList.remove('muted');
-  document.getElementById('musicLabel').textContent = '🎵 ' + file.name.replace(/\.[^/.]+$/, '');
-}
+function loadMusicFile(input) {} // no-op, kept for compatibility
 function getAudioCtx() {
   if (!window._sfxCtx || window._sfxCtx.state === 'closed') {
     window._sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -563,6 +605,12 @@ function getAudioCtx() {
 }
 function ensureAudio() {
   if (window._sfxCtx && window._sfxCtx.state === 'suspended') window._sfxCtx.resume();
+  // Start YouTube on first interaction if pending
+  if (ytPendingPlay && ytReady) {
+    try { ytPlayer.setVolume(masterVolume); ytPlayer.playVideo(); } catch(e) {}
+    ytPendingPlay = false;
+    document.getElementById('ambientBars').classList.remove('muted');
+  }
 }
 document.addEventListener('click', ensureAudio);
 
