@@ -193,8 +193,6 @@
 </head>
 <body class="h-full">
 <div class="math-grid"></div>
-<!-- Hidden YouTube player untuk musik background -->
-<div id="ytPlayerDiv" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;"></div>
 <div class="float-mark text-6xl" style="left:6%;top:10%">Σ</div>
 <div class="float-mark text-5xl" style="right:7%;top:16%;animation-delay:1s">Un</div>
 <div class="float-mark text-6xl" style="left:9%;bottom:10%;animation-delay:2s">Sn</div>
@@ -215,9 +213,13 @@
           <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-extrabold text-blue-800 shadow-sm">🎓 Matematika Kelas 12 SMA</span>
           <a href="https://www.canva.com/design/DAHKNO1az14/5qoP_kE-TVO9r7o92DzDaA/view" class="home-btn">🏠 Home</a>
           <div class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-sm">
-            <button id="muteBtn" onclick="toggleMute()" class="text-blue-700 font-bold hover:text-blue-900 transition" title="Mute/Unmute musik">🔊</button>
-            <input id="volumeSlider" type="range" min="0" max="100" value="40" oninput="setVolume(this.value)"
-              class="w-20 h-1.5 accent-blue-500 cursor-pointer" title="Atur volume musik">
+            <button id="muteBtn" onclick="toggleMute()" class="text-blue-700 font-bold hover:text-blue-900 transition text-sm">🔊</button>
+            <input id="volumeSlider" type="range" min="0" max="100" value="35" oninput="setVolume(this.value)" class="w-16 h-1.5 accent-blue-500 cursor-pointer">
+            <label class="cursor-pointer inline-flex items-center gap-1 text-xs font-black text-blue-700 hover:text-blue-900 transition" title="Upload musik MP3 kamu sendiri">
+              🎵 Musik
+              <input type="file" accept="audio/*" class="hidden" onchange="loadMusicFile(this)">
+            </label>
+            <span id="musicLabel" class="text-xs font-bold text-blue-500 max-w-[80px] truncate hidden sm:block"></span>
           </div>
           <button onclick="showLeaderboard()" class="inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-3 py-2 text-sm font-bold text-amber-800 shadow-sm hover:bg-amber-200 transition">🏆 Papan Skor</button>
           <span id="modeBadge" class="hidden inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-black shadow-sm"></span>
@@ -533,83 +535,37 @@ function getAudioCtx() {
 }
 
 // ==============================
-// AUDIO — YouTube embed (paling reliable, pasti bunyi)
+// AUDIO — user upload MP3 sendiri (100% pasti bunyi)
 // ==============================
-let ytPlayer = null;
-let masterVolume = 35; // 0-100
+let bgAudio = null;
+let masterVolume = 35;
 let musicMuted = false;
-let ytReady = false;
 
 function setVolume(val) {
   masterVolume = parseInt(val);
-  if (ytPlayer && ytReady) ytPlayer.setVolume(musicMuted ? 0 : masterVolume);
+  if (bgAudio) bgAudio.volume = musicMuted ? 0 : masterVolume / 100;
 }
-
-function startAmbientMusic() {
-  if (musicMuted) return;
-  if (ytPlayer && ytReady) { ytPlayer.setVolume(masterVolume); ytPlayer.playVideo(); return; }
-  // Load YouTube IFrame API
-  if (!document.getElementById('yt-api-script')) {
-    const tag = document.createElement('script');
-    tag.id = 'yt-api-script';
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-  }
-}
-
-window.onYouTubeIframeAPIReady = function() {
-  // Lo-fi hip hop study music — "Lofi Girl" style playlist
-  ytPlayer = new YT.Player('ytPlayerDiv', {
-    height: '1', width: '1',
-    videoId: 'jfKfPfyJRdk', // Lofi Girl - beats to relax/study to (live stream)
-    playerVars: {
-      autoplay: 1,
-      loop: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      iv_load_policy: 3,
-      modestbranding: 1,
-      mute: 0
-    },
-    events: {
-      onReady: (e) => {
-        ytReady = true;
-        e.target.setVolume(musicMuted ? 0 : masterVolume);
-        e.target.playVideo();
-        document.getElementById('ambientBars').classList.remove('muted');
-      },
-      onStateChange: (e) => {
-        // Jika ended (bukan live), replay
-        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
-      }
-    }
-  });
-};
-
-function pauseAmbientMusic() {
-  if (ytPlayer && ytReady) ytPlayer.setVolume(0);
-  document.getElementById('ambientBars').classList.add('muted');
-}
-function resumeAmbientMusic() {
-  if (!musicMuted && ytPlayer && ytReady) {
-    ytPlayer.setVolume(masterVolume);
-    ytPlayer.playVideo();
-    document.getElementById('ambientBars').classList.remove('muted');
-  }
-}
-function stopAmbientMusic() {
-  if (ytPlayer && ytReady) ytPlayer.setVolume(0);
-  document.getElementById('ambientBars').classList.add('muted');
-}
+function startAmbientMusic() {}
+function pauseAmbientMusic() { if (bgAudio) bgAudio.volume = 0; }
+function resumeAmbientMusic() { if (bgAudio && !musicMuted) bgAudio.volume = masterVolume / 100; }
+function stopAmbientMusic() { if (bgAudio) bgAudio.volume = 0; }
 function toggleMute() {
   musicMuted = !musicMuted;
   document.getElementById('muteBtn').textContent = musicMuted ? '🔇' : '🔊';
-  if (ytPlayer && ytReady) ytPlayer.setVolume(musicMuted ? 0 : masterVolume);
+  if (bgAudio) bgAudio.volume = musicMuted ? 0 : masterVolume / 100;
   document.getElementById('ambientBars').classList.toggle('muted', musicMuted);
 }
-
-// getAudioCtx untuk sound effects saja
+function loadMusicFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (bgAudio) { bgAudio.pause(); bgAudio = null; }
+  bgAudio = new Audio(URL.createObjectURL(file));
+  bgAudio.loop = true;
+  bgAudio.volume = masterVolume / 100;
+  bgAudio.play();
+  document.getElementById('ambientBars').classList.remove('muted');
+  document.getElementById('musicLabel').textContent = '🎵 ' + file.name.replace(/\.[^/.]+$/, '');
+}
 function getAudioCtx() {
   if (!window._sfxCtx || window._sfxCtx.state === 'closed') {
     window._sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -617,15 +573,10 @@ function getAudioCtx() {
   if (window._sfxCtx.state === 'suspended') window._sfxCtx.resume();
   return window._sfxCtx;
 }
-
-let audioStarted = false;
 function ensureAudio() {
-  if (!audioStarted && !musicMuted) {
-    audioStarted = true;
-    startAmbientMusic();
-  }
+  if (window._sfxCtx && window._sfxCtx.state === 'suspended') window._sfxCtx.resume();
 }
-document.addEventListener('click', ensureAudio, { once: false });
+document.addEventListener('click', ensureAudio);
 
 function playSuccessSound() {
   try {
