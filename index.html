@@ -44,33 +44,29 @@
       backdrop-filter: blur(16px);
     }
 
-    /* ===== SPINNER ===== */
-    .spinner-wheel {
-      width: 240px; height: 240px; border-radius: 50%;
-      position: relative; overflow: hidden;
-      border: 10px solid #fff;
-      box-shadow: 0 20px 40px rgba(217,119,6,0.18), inset 0 0 0 2px rgba(0,0,0,0.04);
-      transition: transform 3s cubic-bezier(.12,.72,.14,1);
-      background: conic-gradient(#3b82f6 0deg 180deg, #06b6d4 180deg 360deg);
+    /* ===== PILIH MATERI CARDS ===== */
+    .materi-card {
+      cursor: pointer; border: 3px solid transparent;
+      border-radius: 1.5rem; transition: all 0.2s; position: relative;
     }
-    .spinner-wheel::after {
-      content: ""; position: absolute; inset: 36%;
-      background: white; border-radius: 50%;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
-    }
-    .wheel-label {
-      position: absolute; z-index: 2; font-weight: 900; color: #fff;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4); width: 110px;
-      text-align: center; line-height: 1.1; font-size: 14px; pointer-events: none;
-    }
-    .wheel-label.top { top: 22px; left: 50%; transform: translateX(-50%); }
-    .wheel-label.bottom { bottom: 22px; left: 50%; transform: translateX(-50%); }
-    .pointer {
-      width: 0; height: 0;
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-top: 30px solid #1e3a8a;
-      filter: drop-shadow(0 6px 6px rgba(0,0,0,0.18));
+    .materi-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(37,99,235,0.18); }
+    .materi-card.barisan-card { background: linear-gradient(135deg,#dbeafe,#e0e7ff); border-color: #93c5fd; }
+    .materi-card.barisan-card:hover { border-color: #3b82f6; }
+    .materi-card.deret-card  { background: linear-gradient(135deg,#cffafe,#d1fae5); border-color: #67e8f9; }
+    .materi-card.deret-card:hover  { border-color: #06b6d4; }
+    /* ===== MODE CARDS ===== */
+    .mode-card { cursor:pointer; border:2.5px solid transparent; border-radius:1.25rem; padding:0.85rem 1.1rem; transition:all 0.18s; }
+    .mode-card:hover { transform:translateY(-2px); }
+    .mode-card.selected-mode { border-color:#3b82f6; box-shadow:0 0 0 4px rgba(59,130,246,0.15); }
+    /* ===== MODE BADGE ===== */
+    .mode-badge-santai { background:#d1fae5; color:#065f46; border:1.5px solid #6ee7b7; }
+    .mode-badge-waktu  { background:#fef3c7; color:#78350f; border:1.5px solid #fcd34d; }
+    /* ===== PITA JATUH DARI ATAS ===== */
+    @keyframes ribbonFallDown {
+      0%   { transform: translateY(-130px) rotateZ(var(--rz-start)) scaleX(1); opacity: 0.95; }
+      35%  { transform: translateY(32vh) rotateZ(calc(var(--rz-start) + 130deg)) scaleX(0.6); opacity: 0.9; }
+      70%  { transform: translateY(68vh) rotateZ(calc(var(--rz-start) + 280deg)) scaleX(1.1); opacity: 0.7; }
+      100% { transform: translateY(115vh) rotateZ(calc(var(--rz-start) + 430deg)) scaleX(0.3); opacity: 0; }
     }
 
     /* ===== TIMER ===== */
@@ -218,9 +214,10 @@
           <a href="https://www.canva.com/design/DAHKNO1az14/5qoP_kE-TVO9r7o92DzDaA/view" class="home-btn">🏠 Home</a>
           <button id="muteBtn" onclick="toggleMute()" class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-white transition" title="Mute/Unmute musik">🔊</button>
           <button onclick="showLeaderboard()" class="inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-3 py-2 text-sm font-bold text-amber-800 shadow-sm hover:bg-amber-200 transition">🏆 Papan Skor</button>
+          <span id="modeBadge" class="hidden inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-black shadow-sm"></span>
         </div>
         <h1 class="mt-3 text-3xl md:text-5xl font-black leading-tight text-blue-950">Kuis Barisan &amp; Deret Aritmatika</h1>
-        <p class="mt-1 max-w-xl text-base font-bold text-blue-900/70">Putar spinner, jawab soal, kalahkan waktumu sendiri!</p>
+        <p class="mt-1 max-w-xl text-base font-bold text-blue-900/70">Pilih materi, pilih mode, lalu jawab soalnya!</p>
       </div>
       <div class="card-glass rounded-2xl px-5 py-4 text-blue-950 flex gap-6 items-center">
         <div>
@@ -237,43 +234,65 @@
 
   <!-- ===== START SCREEN ===== -->
   <main class="w-full px-5 py-6 md:px-10 md:py-8">
-    <section id="startScreen" class="mx-auto max-w-6xl card-glass rounded-[2rem] p-6 md:p-10 slide-up">
-      <div class="grid md:grid-cols-[1fr_1.1fr] gap-8 items-center">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-black text-blue-950">Putar Spinner Materi</h2>
-          <p class="mt-2 font-bold text-blue-900/70">Spinner memilih materi secara acak — soal langsung tampil setelah berhenti.</p>
-          <div class="mt-5 grid sm:grid-cols-2 gap-3">
-            <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4">
-              <div class="flex items-center gap-2 font-black text-blue-800"><span class="grid place-items-center w-8 h-8 rounded-xl bg-blue-600 text-white text-sm">1</span> Barisan Aritmatika</div>
-              <p class="mt-2 text-sm font-bold text-blue-900/65">Suku ke-n, beda, rumus umum barisan.</p>
-            </div>
-            <div class="rounded-2xl bg-cyan-50 border border-cyan-200 p-4">
-              <div class="flex items-center gap-2 font-black text-cyan-800"><span class="grid place-items-center w-8 h-8 rounded-xl bg-cyan-500 text-white text-sm">2</span> Deret Aritmatika</div>
-              <p class="mt-2 text-sm font-bold text-cyan-900/65">Jumlah n suku pertama dan penerapannya.</p>
-            </div>
-          </div>
+    <section id="startScreen" class="mx-auto max-w-5xl slide-up space-y-5">
 
-          <!-- Rumus hint box on start -->
-          <div class="hint-box mt-5 text-sm">
-            📐 <strong>Rumus Kunci:</strong><br>
-            <span class="text-blue-800">Un = a + (n−1)b</span> &nbsp;|&nbsp;
-            <span class="text-cyan-800">Sn = n/2 · (2a + (n−1)b)</span><br>
-            <span class="text-slate-600">a = suku pertama &nbsp;|&nbsp; b = beda &nbsp;|&nbsp; n = jumlah suku</span>
+      <!-- PILIH MATERI -->
+      <div class="card-glass rounded-[2rem] p-6 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-black text-blue-950 mb-1">📚 Pilih Materi</h2>
+        <p class="text-sm font-bold text-blue-900/60 mb-5">Klik salah satu untuk mulai kuis.</p>
+        <div class="grid sm:grid-cols-2 gap-5">
+          <div class="materi-card barisan-card p-6" onclick="startQuiz('barisan')">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="grid place-items-center w-12 h-12 rounded-2xl bg-blue-600 text-white text-2xl font-black shadow">📈</span>
+              <div>
+                <div class="text-lg font-black text-blue-900">Barisan Aritmatika</div>
+                <div class="text-xs font-bold text-blue-700/70">5 soal · 3 abstrak + 2 cerita</div>
+              </div>
+            </div>
+            <p class="text-sm font-bold text-blue-800/80 leading-relaxed">Suku ke-n, beda, dan rumus umum barisan. Mulai dari soal langsung hingga konteks cerita nyata.</p>
+            <div class="mt-4 rounded-xl bg-white/60 px-4 py-2 text-xs font-black text-blue-800">📐 Rumus: <span class="text-blue-600">Uₙ = a + (n−1)b</span></div>
+            <div class="mt-3 w-full rounded-xl bg-blue-600 py-3 text-center font-black text-white text-sm shadow hover:bg-blue-700 transition">Mulai Barisan Aritmatika →</div>
           </div>
-
-          <button id="spinButton" class="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-white font-black shadow-lg shadow-blue-700/20 hover:bg-blue-700 active:scale-95 transition cursor-pointer">
-            🔄 Putar Spinner
-          </button>
-        </div>
-        <div class="flex flex-col items-center justify-center">
-          <div class="pointer mb-[-2px] z-10"></div>
-          <div id="wheel" class="spinner-wheel">
-            <div class="wheel-label top">Barisan<br>Aritmatika</div>
-            <div class="wheel-label bottom">Deret<br>Aritmatika</div>
+          <div class="materi-card deret-card p-6" onclick="startQuiz('deret')">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="grid place-items-center w-12 h-12 rounded-2xl bg-cyan-500 text-white text-2xl font-black shadow">➕</span>
+              <div>
+                <div class="text-lg font-black text-cyan-900">Deret Aritmatika</div>
+                <div class="text-xs font-bold text-cyan-700/70">5 soal · 3 abstrak + 2 cerita</div>
+              </div>
+            </div>
+            <p class="text-sm font-bold text-cyan-800/80 leading-relaxed">Jumlah n suku pertama dan penerapan deret dalam kehidupan nyata. Lebih menantang!</p>
+            <div class="mt-4 rounded-xl bg-white/60 px-4 py-2 text-xs font-black text-cyan-800">📐 Rumus: <span class="text-cyan-700">Sₙ = n/2 · (2a + (n−1)b)</span></div>
+            <div class="mt-3 w-full rounded-xl bg-cyan-500 py-3 text-center font-black text-white text-sm shadow hover:bg-cyan-600 transition">Mulai Deret Aritmatika →</div>
           </div>
-          <p id="spinStatus" class="mt-4 min-h-[30px] rounded-full bg-white/70 px-5 py-2 text-center font-black text-blue-950">Siap diputar!</p>
         </div>
       </div>
+
+      <!-- PILIH MODE -->
+      <div class="card-glass rounded-[2rem] p-6 md:p-7">
+        <h2 class="text-lg font-black text-blue-950 mb-1">🎮 Pilih Mode Bermain</h2>
+        <p class="text-xs font-bold text-blue-900/60 mb-3">Mode aktif saat kamu klik pilih materi di atas.</p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div id="modeSantaiCard" class="mode-card bg-emerald-50 border-emerald-200 selected-mode" onclick="selectMode('santai')">
+            <div class="flex items-center gap-2 mb-1"><span class="text-xl">🧘</span><span class="font-black text-emerald-800">Mode Santai</span><span class="ml-auto text-xs rounded-full bg-emerald-200 text-emerald-800 px-2 py-0.5 font-black">Rekomendasi</span></div>
+            <p class="text-xs font-bold text-emerald-700/80">Tanpa batas waktu. Cocok untuk belajar & berlatih tenang.</p>
+          </div>
+          <div id="modeWaktuCard" class="mode-card bg-amber-50 border-amber-200" onclick="selectMode('waktu')">
+            <div class="flex items-center gap-2 mb-1"><span class="text-xl">⏱</span><span class="font-black text-amber-800">Mode Waktu</span><span class="ml-auto text-xs rounded-full bg-amber-200 text-amber-800 px-2 py-0.5 font-black">30 detik/soal</span></div>
+            <p class="text-xs font-bold text-amber-700/80">Ada countdown per soal. Uji kecepatan & ketepatan kamu!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RUMUS KUNCI -->
+      <div class="hint-box text-sm">
+        📐 <strong>Rumus Kunci:</strong><br>
+        <span class="text-blue-800">Uₙ = a + (n−1)b</span> &nbsp;|&nbsp;
+        <span class="text-cyan-800">Sₙ = n/2 · (2a + (n−1)b)</span> &nbsp;|&nbsp;
+        <span class="text-emerald-800">Sₙ = n/2 · (a + Uₙ)</span><br>
+        <span class="text-slate-600">a = suku pertama &nbsp;|&nbsp; b = beda &nbsp;|&nbsp; n = jumlah suku</span>
+      </div>
+
     </section>
 
     <!-- ===== QUIZ SCREEN ===== -->
@@ -300,6 +319,11 @@
             </div>
           </div>
           <span class="text-xs font-bold text-blue-900/50">detik</span>
+        </div>
+        <!-- Santai badge (hidden in waktu mode) -->
+        <div id="santaiBadgeWrap" class="hidden flex-col items-center justify-center gap-1">
+          <div class="rounded-full bg-emerald-100 border border-emerald-300 px-4 py-2 text-sm font-black text-emerald-800">🧘 Mode Santai</div>
+          <span class="text-xs font-bold text-emerald-700/60">Santai aja, ga ada batas waktu!</span>
         </div>
       </div>
 
@@ -332,7 +356,7 @@
       <!-- Bottom actions -->
       <div class="mt-5 flex flex-col sm:flex-row gap-3 justify-between">
         <button id="backToSpinButton" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/80 border border-blue-100 px-5 py-3 font-black text-blue-900 hover:bg-blue-50 transition">
-          🔀 Pilih Materi Lagi
+          ← Pilih Materi Lagi
         </button>
         <button id="skipButton" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 font-black text-white hover:bg-cyan-600 transition">
           ⏭ Ganti Soal Lain
@@ -390,77 +414,81 @@ const TIMER_MAX = 30;
 
 const questions = {
   barisan: [
+    // === 3 SOAL ABSTRAK ===
     {
       question: "Barisan aritmatika: 7, 12, 17, 22, ... . Suku ke-18 adalah ....",
       options: ["87", "92", "97", "102"],
       answer: 1,
-      explanation: "Un = a + (n−1)b. a=7, b=5, n=18 → U18 = 7 + 17×5 = 92.",
-      hint: "Gunakan Un = a + (n−1)b. a = suku pertama, b = beda."
+      explanation: "Un = a + (n−1)b. a=7, b=5, n=18 → U18 = 7 + 17×5 = 7 + 85 = 92.",
+      hint: "Gunakan Un = a + (n−1)b. a = suku pertama (7), b = beda (5)."
     },
     {
       question: "Barisan aritmatika: suku ke-4 = 19, suku ke-10 = 49. Beda barisan tersebut adalah ....",
       options: ["4", "5", "6", "7"],
       answer: 1,
       explanation: "Selisih indeks 10−4=6. Selisih suku 49−19=30. Beda b = 30÷6 = 5.",
-      hint: "b = (U10 − U4) ÷ (10 − 4)"
+      hint: "b = (U10 − U4) ÷ (10 − 4) = 30 ÷ 6"
     },
     {
-      question: "Barisan aritmatika: a=11, b=−3. Rumus suku ke-n adalah ....",
+      question: "Barisan aritmatika dengan a = 11 dan b = −3. Rumus suku ke-n yang paling sederhana adalah ....",
       options: ["Un = 14 − 3n", "Un = 11 − 3n", "Un = 8 − 3n", "Un = 3n + 8"],
       answer: 0,
-      explanation: "Un = 11 + (n−1)(−3) = 11 − 3n + 3 = 14 − 3n.",
-      hint: "Un = a + (n−1)b, kemudian sederhanakan."
+      explanation: "Un = a + (n−1)b = 11 + (n−1)(−3) = 11 − 3n + 3 = 14 − 3n.",
+      hint: "Un = a + (n−1)b. Substitusi lalu sederhanakan: 11 + (n−1)(−3)."
     },
+    // === 2 SOAL CERITA PANJANG ===
     {
-      question: "Siswa menabung Rp20.000 minggu ke-1, lalu bertambah Rp5.000 tiap minggu. Tabungan minggu ke-12 adalah ....",
+      question: "Rizky rajin menabung setiap hari. Pada hari pertama ia menabung Rp20.000, hari kedua Rp25.000, hari ketiga Rp30.000, dan seterusnya — selalu bertambah Rp5.000 dari hari sebelumnya. Kebiasaan ini ia lakukan selama sebulan penuh. Berapa rupiah yang Rizky tabungkan tepat pada hari ke-12?",
       options: ["Rp70.000", "Rp75.000", "Rp80.000", "Rp85.000"],
       answer: 1,
-      explanation: "a=20.000, b=5.000, n=12. U12 = 20.000 + 11×5.000 = 75.000.",
-      hint: "Identifikasi a (minggu pertama) dan b (penambahan per minggu)."
+      explanation: "a=20.000, b=5.000, n=12. U12 = 20.000 + 11×5.000 = 20.000 + 55.000 = Rp75.000.",
+      hint: "a = tabungan hari ke-1 (Rp20.000), b = kenaikan harian (Rp5.000). Cari U12."
     },
     {
-      question: "Baris 1 aula: 18 kursi; tiap baris berikutnya +4 kursi. Banyak kursi baris ke-15 adalah ....",
-      options: ["70", "74", "78", "82"],
+      question: "Aula gedung serbaguna SMA Nusantara dirancang dengan susunan kursi membentuk barisan aritmatika. Baris paling depan memiliki 18 kursi, dan setiap baris di belakangnya selalu ditambah 4 kursi dari baris sebelumnya. Gedung tersebut memiliki total 20 baris kursi. Berapa banyak kursi yang terdapat tepat di baris ke-15?",
+      options: ["70 kursi", "74 kursi", "78 kursi", "82 kursi"],
       answer: 1,
-      explanation: "a=18, b=4, n=15. U15 = 18 + 14×4 = 74.",
-      hint: "Tiap baris = satu suku barisan aritmatika."
+      explanation: "a=18, b=4, n=15. U15 = 18 + 14×4 = 18 + 56 = 74 kursi.",
+      hint: "Setiap baris = satu suku barisan. a=18, b=4, cari suku ke-15."
     }
   ],
   deret: [
+    // === 3 SOAL ABSTRAK ===
     {
       question: "Jumlah 20 suku pertama deret: 4 + 9 + 14 + 19 + ... adalah ....",
       options: ["970", "990", "1.030", "1.050"],
       answer: 2,
-      explanation: "Sn = n/2(2a+(n−1)b). a=4, b=5, n=20 → S20 = 10(8+95) = 1.030.",
-      hint: "Sn = n/2 · (2a + (n−1)b)"
+      explanation: "a=4, b=5, n=20. S20 = 20/2 × (2×4 + 19×5) = 10 × (8+95) = 10 × 103 = 1.030.",
+      hint: "Sn = n/2 · (2a + (n−1)b). Masukkan a=4, b=5, n=20."
     },
     {
-      question: "Deret aritmatika: a=6, U15=62. Jumlah 15 suku pertama adalah ....",
+      question: "Deret aritmatika dengan a = 6 dan suku ke-15 = 62. Jumlah 15 suku pertama adalah ....",
       options: ["480", "510", "525", "540"],
       answer: 1,
-      explanation: "Sn = n/2(a+Un). S15 = 15/2(6+62) = 510.",
-      hint: "Jika a dan Un diketahui: Sn = n/2 · (a + Un)"
+      explanation: "Sn = n/2 · (a + Un). S15 = 15/2 × (6+62) = 7,5 × 68 = 510.",
+      hint: "Jika a dan Un diketahui: Sn = n/2 · (a + Un). Masukkan a=6, U15=62, n=15."
     },
     {
-      question: "Sn = 3n² + 2n. Suku ke-10 deret tersebut adalah ....",
+      question: "Jumlah n suku pertama suatu deret aritmatika dirumuskan Sn = 3n² + 2n. Suku ke-10 deret tersebut adalah ....",
       options: ["53", "56", "59", "62"],
       answer: 2,
-      explanation: "Un = Sn − S(n−1). S10=320, S9=261, U10 = 59.",
-      hint: "Un = Sn − S(n−1). Hitung S10 dan S9 terlebih dulu."
+      explanation: "Un = Sn − S(n−1). S10 = 3(100)+2(10) = 320. S9 = 3(81)+2(9) = 261. U10 = 320−261 = 59.",
+      hint: "Un = Sn − S(n−1). Hitung S10 dan S9 dari rumus yang diberikan, lalu kurangkan."
     },
+    // === 2 SOAL CERITA PANJANG ===
     {
-      question: "Gedung: baris 1 = 12 kursi, +3 per baris, 18 baris. Total kursi adalah ....",
-      options: ["639", "657", "675", "693"],
+      question: "Panitia OSIS SMA Pertiwi merancang tata letak kursi untuk acara wisuda yang megah. Baris pertama di bagian paling depan berisi 12 kursi, dan setiap baris di belakangnya selalu ditambah 3 kursi. Gedung wisuda tersebut memiliki tepat 18 baris. Berapa total seluruh kursi yang tersedia di gedung tersebut?",
+      options: ["639 kursi", "657 kursi", "675 kursi", "693 kursi"],
       answer: 2,
-      explanation: "a=12, b=3, n=18. S18 = 9(24+51) = 675.",
-      hint: "Total kursi = S18 (jumlah semua suku deret)."
+      explanation: "a=12, b=3, n=18. S18 = 18/2 × (2×12 + 17×3) = 9 × (24+51) = 9 × 75 = 675 kursi.",
+      hint: "Total kursi = S18. Gunakan Sn = n/2 × (2a + (n−1)b). a=12, b=3, n=18."
     },
     {
-      question: "Pelari berlatih 10 hari: hari-1 = 2 km, +0,5 km/hari. Total 10 hari adalah ....",
+      question: "Taufik, atlet lari SMA Mandiri, menjalani program latihan intensif selama 10 hari. Pada hari pertama ia berlari sejauh 2 km. Setiap hari berikutnya ia menambah jaraknya sebesar 0,5 km dari hari sebelumnya agar stamina terus meningkat. Jika pola ini terjaga selama 10 hari, berapa total jarak keseluruhan yang berhasil Taufik tempuh selama program latihan tersebut?",
       options: ["40,5 km", "42,5 km", "44,5 km", "45,5 km"],
       answer: 1,
-      explanation: "a=2, b=0,5, n=10. S10 = 5(4+4,5) = 42,5 km.",
-      hint: "S10 = 10/2 · (2×2 + 9×0,5)"
+      explanation: "a=2, b=0,5, n=10. S10 = 10/2 × (2×2 + 9×0,5) = 5 × (4+4,5) = 5 × 8,5 = 42,5 km.",
+      hint: "S10 = 10/2 · (2×2 + 9×0,5). Hati-hati dengan angka desimalnya!"
     }
   ]
 };
@@ -473,7 +501,6 @@ let currentQuestions = [];
 let currentIndex = 0;
 let score = 0;
 let totalAnswered = 0;
-let wheelRotation = 0;
 let answeredCorrectly = new Set();
 let timerInterval = null;
 let timeLeft = TIMER_MAX;
@@ -481,6 +508,13 @@ let quizStartTime = null;
 let musicMuted = false;
 let ambientCtx = null;
 let hintShown = false;
+let gameMode = 'santai'; // 'santai' | 'waktu'
+
+function selectMode(mode) {
+  gameMode = mode;
+  document.getElementById('modeSantaiCard').classList.toggle('selected-mode', mode === 'santai');
+  document.getElementById('modeWaktuCard').classList.toggle('selected-mode', mode === 'waktu');
+}
 
 // ==============================
 // AUDIO
@@ -590,15 +624,31 @@ function playSuccessSound() {
   try {
     const ctx = getAudioCtx();
     const now = ctx.currentTime;
-    [[523.25,0.05],[659.25,0.18],[783.99,0.34],[1046.5,0.52]].forEach(([freq, delay]) => {
-      const o = ctx.createOscillator();
+    // Tepuk tangan: noise bursts
+    for (let i = 0; i < 7; i++) {
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass'; filter.frequency.value = 1100 + Math.random()*700; filter.Q.value = 0.6;
       const g = ctx.createGain();
-      o.type = delay > 0.4 ? 'triangle' : 'sine';
-      o.frequency.value = freq;
+      const t = now + i * 0.11 + Math.random() * 0.025;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.38, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      src.connect(filter); filter.connect(g); g.connect(ctx.destination);
+      src.start(t); src.stop(t + 0.1);
+    }
+    // Nada jingle naik
+    [[523.25,0.05],[659.25,0.22],[783.99,0.38],[1046.5,0.56]].forEach(([freq, delay]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = freq;
       o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.28, now + delay);
-      g.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.28);
-      o.start(now + delay); o.stop(now + delay + 0.3);
+      g.gain.setValueAtTime(0.22, now+delay);
+      g.gain.exponentialRampToValueAtTime(0.001, now+delay+0.28);
+      o.start(now+delay); o.stop(now+delay+0.32);
     });
   } catch(e) {}
 }
@@ -607,15 +657,26 @@ function playErrorSound() {
   try {
     const ctx = getAudioCtx();
     const now = ctx.currentTime;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'square';
-    o.frequency.setValueAtTime(380, now);
-    o.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-    o.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0.22, now);
-    g.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-    o.start(now); o.stop(now + 0.35);
+    // Wah-wah descending
+    [[380,0],[260,0.18],[200,0.35]].forEach(([freq, delay]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(freq, now+delay);
+      o.frequency.exponentialRampToValueAtTime(freq*0.6, now+delay+0.18);
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.18, now+delay);
+      g.gain.exponentialRampToValueAtTime(0.001, now+delay+0.22);
+      o.start(now+delay); o.stop(now+delay+0.25);
+    });
+    // Drum thud
+    const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o2.type = 'sine';
+    o2.frequency.setValueAtTime(120, now);
+    o2.frequency.exponentialRampToValueAtTime(40, now+0.25);
+    o2.connect(g2); g2.connect(ctx.destination);
+    g2.gain.setValueAtTime(0.38, now);
+    g2.gain.exponentialRampToValueAtTime(0.001, now+0.3);
+    o2.start(now); o2.stop(now+0.3);
   } catch(e) {}
 }
 
@@ -640,6 +701,7 @@ function playTickSound() {
 const CIRCUMFERENCE = 2 * Math.PI * 24; // ~150.8
 
 function startTimer() {
+  if (gameMode === 'santai') return; // no timer
   clearInterval(timerInterval);
   timeLeft = TIMER_MAX;
   updateTimerUI();
@@ -890,7 +952,8 @@ function checkAnswer(selectedIndex, btn) {
     totalAnswered++;
     document.getElementById('totalAnswered').textContent = totalAnswered;
     playSuccessSound();
-    setTimeout(() => createConfetti(), 60);
+    createConfetti();      // LANGSUNG — tanpa delay
+    createRibbonFall();    // pita jatuh dari atas
     renderProgress();
     showModal({ correct: true, title: 'BENAR! 🎉', message: 'Jawaban tepat!', explanation: '' });
   } else {
@@ -994,53 +1057,61 @@ function startQuiz(category) {
   currentQuestions = shuffleArray(questions[category]);
   currentIndex = 0;
   answeredCorrectly = new Set();
-  score = 0;
-  totalAnswered = 0;
-  quizStartTime = Date.now();
+  score = 0; totalAnswered = 0; quizStartTime = Date.now();
   document.getElementById('scoreText').textContent = 0;
   document.getElementById('totalAnswered').textContent = 0;
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('quizScreen').classList.remove('hidden');
+
+  // Timer vs Santai UI
+  const timerWrap = document.getElementById('timerWrap');
+  const santaiBadge = document.getElementById('santaiBadgeWrap');
+  if (gameMode === 'santai') {
+    timerWrap.classList.add('hidden');
+    santaiBadge.classList.remove('hidden'); santaiBadge.classList.add('flex');
+  } else {
+    timerWrap.classList.remove('hidden');
+    santaiBadge.classList.add('hidden'); santaiBadge.classList.remove('flex');
+  }
+
+  // Mode badge di header
+  const mb = document.getElementById('modeBadge');
+  mb.classList.remove('hidden');
+  mb.className = `inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-black shadow-sm ${gameMode === 'santai' ? 'mode-badge-santai' : 'mode-badge-waktu'}`;
+  mb.textContent = gameMode === 'santai' ? '🧘 Mode Santai' : '⏱ Mode Waktu';
+
   startAmbientMusic();
   renderQuestion();
 }
 
-function spinWheel() {
-  const btn = document.getElementById('spinButton');
-  btn.disabled = true;
-  document.getElementById('spinStatus').textContent = 'Spinner sedang berputar...';
-
-  const category = Math.random() < 0.5 ? 'barisan' : 'deret';
-  const extraRounds = 5 + Math.floor(Math.random() * 3);
-  const targetAngle = category === 'barisan' ? 90 : 270;
-  wheelRotation += extraRounds * 360 + targetAngle;
-  document.getElementById('wheel').style.transform = `rotate(${wheelRotation}deg)`;
-
-  setTimeout(() => {
-    const name = category === 'barisan' ? 'Barisan Aritmatika' : 'Deret Aritmatika';
-    document.getElementById('spinStatus').textContent = `Terpilih: ${name}`;
-  }, 2600);
-
-  setTimeout(() => {
-    btn.disabled = false;
-    startQuiz(category);
-  }, 3200);
+function createRibbonFall() {
+  const colors = ["#fbbf24","#f97316","#fcd34d","#fb923c","#ec4899","#06b6d4","#10b981","#8b5cf6","#f43f5e","#60a5fa","#34d399","#a78bfa"];
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:41;overflow:hidden;';
+  document.body.appendChild(container);
+  for (let i = 0; i < 120; i++) {
+    const el = document.createElement('div');
+    const w = 6+Math.random()*12, h = 25+Math.random()*70;
+    const dur = 2.0+Math.random()*1.5, delay = Math.random()*0.8;
+    const rz = (Math.random()-0.5)*70;
+    el.style.cssText = `position:absolute;left:${Math.random()*100}%;top:-130px;width:${w}px;height:${h}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:3px;opacity:0.92;--rz-start:${rz}deg;animation:ribbonFallDown ${dur}s cubic-bezier(0.25,0.46,0.45,0.94) ${delay}s forwards;`;
+    container.appendChild(el);
+  }
+  setTimeout(() => container.remove(), 5000);
 }
 
 function resetToStart() {
-  stopTimer();
-  stopAmbientMusic();
+  stopTimer(); stopAmbientMusic();
   document.getElementById('completionOverlay').classList.add('hidden');
   document.getElementById('completionOverlay').classList.remove('flex');
   document.getElementById('quizScreen').classList.add('hidden');
   document.getElementById('startScreen').classList.remove('hidden');
-  document.getElementById('spinStatus').textContent = 'Siap diputar!';
+  document.getElementById('modeBadge').classList.add('hidden');
 }
 
 // ==============================
 // EVENT LISTENERS
 // ==============================
-document.getElementById('spinButton').onclick = () => spinWheel();
 document.getElementById('skipButton').onclick = () => { stopTimer(); goNextQuestion(); };
 document.getElementById('backToSpinButton').onclick = () => { stopTimer(); stopAmbientMusic(); resetToStart(); };
 document.getElementById('modalOverlay').addEventListener('click', e => {
