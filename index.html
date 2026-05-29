@@ -513,10 +513,8 @@ let answeredCorrectly = new Set();
 let timerInterval = null;
 let timeLeft = TIMER_MAX;
 let quizStartTime = null;
-let musicMuted = false;
-let ambientCtx = null;
 let hintShown = false;
-let gameMode = 'santai'; // 'santai' | 'waktu'
+let gameMode = 'santai';
 
 function selectMode(mode) {
   gameMode = mode;
@@ -525,17 +523,7 @@ function selectMode(mode) {
 }
 
 // ==============================
-// AUDIO
-// ==============================
-function getAudioCtx() {
-  if (!ambientCtx || ambientCtx.state === 'closed') {
-    ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return ambientCtx;
-}
-
-// ==============================
-// AUDIO — user upload MP3 sendiri (100% pasti bunyi)
+// AUDIO — user upload MP3 sendiri
 // ==============================
 let bgAudio = null;
 let masterVolume = 35;
